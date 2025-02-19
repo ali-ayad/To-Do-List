@@ -1,10 +1,22 @@
 const express = require('express');
 const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const cors = require("cors");
 
 const app = express();
 const port = process.env.PORT || 4000;
 app.use(express.json());
+
+app.use(cors());
+
+// (Optional) Configure CORS with specific options
+app.use(
+  cors({
+    origin: "http://localhost:3000", // Allow requests from frontend
+    methods: "GET,POST,PUT,DELETE",
+    allowedHeaders: "Content-Type,Authorization",
+  })
+);
 
 const tasks = [{
     id: 1,
@@ -121,7 +133,7 @@ app.post('/tasks', (req, res) => {
         res.status(404).json({ msg: `Please enter the title` });
     } else {
         tasks.push(newTask);
-        res.status(201).json(tasks);
+        res.status(201).json(newTask);
     }
 });
 

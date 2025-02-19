@@ -9,9 +9,7 @@ import {
   Tooltip,
 } from "antd";
 
-
-
-function AddOrEdit({ data }) {
+function AddOrEdit({ data,onfetch }) {
   const [form] = Form.useForm();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const handleCancel = () => {
@@ -28,53 +26,56 @@ function AddOrEdit({ data }) {
     form
       .validateFields()
       .then((val) => {
-        // handleFinish(val);
+        handleFinish(val);
       })
       .catch((e) => {
         console.log(e);
       });
   };
 
+  const handleFinish = async (values) => {
+    try {
+      const updatedValues = {
+        ...values,
+      };
 
-    // const handleFinish = async (values) => {
-    //   try {
-    //     const userId = sessionStorage.getItem("UserID");
-     
-   
-    //     const updatedValues = {
-    //       ...values,
-    //       userId,
-    //       leaderId:data.leaderId,
-    //     };
-    //     const teamId =data.id;
-    //     const dataR = data === "add"
-    //         ? await addOrganization(updatedValues).unwrap()
-    //         : await UpdateOrganization({
-    //             body: updatedValues,
-    //             id: teamId,
-    //           }).unwrap();
-    
-    //     if (dataR.isSuccess) {
-    //       setIsModalOpen(false);
-        
+      let response;
+      if (data === "add") {
+        response = await fetch("http://localhost:8000/tasks", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedValues),
+        });
+      } else {
+        response = await fetch(`http://localhost:8000/tasks/${data.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedValues),
+        });
+      }
 
-    
-    //       notification.success({
-    //         message: data === "add" ? "تمت الإضافة بنجاح" : "تم التعديل بنجاح",
-    //         placement: "bottomLeft",
-    //       });
-    
-    //       form.resetFields();
-    //     } else {
-    //       message.error(dataR.errorMessages?.includes("User already exists") ? "هذا المستخدم موجود." : "فشل في الإضافة. يرجى المحاولة مرة أخرى.");
-    //     }
-    //   } catch (error) {
-    //     console.error("فشل في الإضافة:", error);
-    //     message.error("حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.");
-    //   }
-    // };
-    
-    
+      if (response.status == 201) {
+        setIsModalOpen(false);
+        notification.success({
+          message: data === "add" ? "تمت الإضافة بنجاح" : "تم التعديل بنجاح",
+          placement: "bottomLeft",
+        });
+      
+        form.resetFields();
+
+        onfetch()
+      } else {
+        message.error("فشل في العملية. يرجى المحاولة مرة أخرى.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      message.error("حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.");
+    }
+  };
 
   const initialValues = () => {
     form.setFieldsValue({
@@ -82,26 +83,20 @@ function AddOrEdit({ data }) {
       description: data.description,
     });
   };
-  
-
- 
-
-
 
   const Info = () => {
     return (
       <Form form={form} layout="vertical" name="addOrganizationForm">
         <Form.Item
-          name="name"
+          name="title"
           label=" المهمة"
           rules={[{ required: true, message: "يرجى ادخال الاسم" }]}
         >
-          <Input placeholder="ادخل المهمة" className="h-[45px] rounded-[11px]" />
+          <Input
+            placeholder="ادخل المهمة"
+            className="h-[45px] rounded-[11px]"
+          />
         </Form.Item>
-
-     
-
-        
 
         <div className="flex justify-center gap-6 py-5">
           <Button
@@ -129,16 +124,15 @@ function AddOrEdit({ data }) {
           <Button
             type="primary"
             onClick={() => setIsModalOpen(true)}
-            // size="large"
             className="flex items-center"
           >
             اضافة
           </Button>
-        ) : (
+        ) : data === "edit" ? ( // Else if condition
           <Tooltip placement="top" title="تعديل">
             <div
               onClick={() => setIsModalOpen(true)}
-              className=" flex justify-between items-center"
+              className="flex justify-between items-center"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -156,6 +150,8 @@ function AddOrEdit({ data }) {
               </svg>
             </div>
           </Tooltip>
+        ) : (
+          <></>
         )}
       </>
     );

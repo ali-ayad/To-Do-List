@@ -1,16 +1,42 @@
-import React, { useState } from 'react';
-import { List, Typography } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { List, message, Typography } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
-
+import TaskAdd from "./TaskAdd"
 // Move initialTasks outside the component
-const initialTasks = [
-  { id: 1, title: 'Wake up' },
-  { id: 2, title: 'Have breakfast' },
-  { id: 3, title: 'Go to work' },
-];
 
 const TaskShow = () => {
-  const [tasks, setTasks] = useState(initialTasks);
+  const [tasks, setTasks] = useState();
+
+  
+
+  const fetchTasks = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/tasks", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to fetch tasks");
+      }
+  
+      const data = await response.json();
+      setTasks(data)
+      console.log("Tasks:", data); // Handle the fetched data
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTasks();
+  }, [tasks]);
+
+  // Call the function
+  
+  
 
   // Handle Edit
   const handleEdit = (id) => {
@@ -21,14 +47,35 @@ const TaskShow = () => {
   };
 
   // Handle Delete
-  const handleDelete = (id) => {
-    setTasks(tasks.filter(task => task.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:8000/tasks/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+  
+      if (response.ok) {
+        setTasks(tasks.filter(task => task.id !== id)); // Update UI after successful delete
+        message.success("تم حذف المهمة بنجاح"); // Show success message
+      } else {
+        message.error("فشل في حذف المهمة"); // Show error if deletion fails
+      }
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      message.error("حدث خطأ أثناء الحذف"); // Show error message
+    }
   };
+  
 
   return (
+    <>
+    <TaskAdd onfetch={setTasks} />
     <List
       header={<h2>قائمة المهام</h2>}
       bordered
+      style={{ maxHeight: "450px", overflowY: "auto", scrollbarWidth: "none",  }}
       dataSource={tasks}
       renderItem={item => (
         <List.Item
@@ -41,6 +88,7 @@ const TaskShow = () => {
         </List.Item>
       )}
     />
+    </>
   );
 };
 
