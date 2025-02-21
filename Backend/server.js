@@ -18,10 +18,7 @@ app.use(
   })
 );
 
-const tasks = [{
-    id: 1,
-    title: 'wake up'
-}];
+const tasks = [];
 
 // Swagger Configuration
 const swaggerOptions = {
